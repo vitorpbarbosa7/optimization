@@ -1,3 +1,5 @@
+# https://www.amazon.com.br/Machine-Learning-Practical-Approach-Statistical/dp/3319949888
+
 from typing import List, Dict, Callable, Type, Union
 import pandas as pd
 import numpy as np
