@@ -4,7 +4,9 @@ from typing import List, Dict, Callable, Type, Union
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
+import math
 from sklearn.model_selection import train_test_split
+from sklearn.datasets import make_circles
 from plotnine import *
 
 import warnings
@@ -38,7 +40,7 @@ def classif_algo(X_train, X_test, y_train, y_test):
                 m_positive += 1
 
             # classe negativa
-            if y_train[index_train] == -1:|
+            if y_train[index_train] == -1:
                 single_dot_product_negative = np.dot(unseen, seen)
                 sum_negative += single_dot_product_negative
                 m_negative += 1
@@ -101,54 +103,85 @@ def classif_algo(X_train, X_test, y_train, y_test):
     
     return results
 
-def generate_2d_points(loc:int = 0, scale:int = 1, size:int = 100) -> List[Union[int, float]]:
+def generate_2d_points(mean:int = 0, sd:int = 1, size:int = 100) -> List[Union[int, float]]:
 
     pair_points = [
-        list(np.random.normal(loc = loc, scale = scale, size = size)),
-        list(np.random.normal(loc = loc, scale = scale, size = size))
+        list(np.random.normal(loc = mean, scale = sd, size = size)),
+        list(np.random.normal(loc = mean, scale = sd, size = size))
         ]
 
     return pair_points
 
+def make_points(size:int = 200):
+
+    X_small, y_small = make_circles(n_samples=(250,500), random_state=2, 
+    noise=0.04, factor = 0.3)
+    X_large, y_large = make_circles(n_samples=(250,500), random_state=2, 
+    noise=0.04, factor = 0.7)
+
+    y_large[y_large==1] = 2
+    df = pd.DataFrame(np.vstack([X_small,X_large]),columns=['x1','x2'])
+    df['label'] = np.hstack([y_small,y_large])
+    print(df.label.value_counts())
+
+    df = df[df['label'].isin([0,1])]
+
+    df['label'] = np.where(df['label']==0, -1, df['label'])
+
+    pos_dataset = df[df['label']==+1].values
+    neg_dataset = df[df['label']==-1].values
+
+    print(len(pos_dataset))
+    print(len(neg_dataset))
+
+    plot = (
+        ggplot(data = df, mapping = aes(x = 'x1', y = 'x2')) + 
+        geom_point()
+    )
+    print(plot)
+
+    # return pos_dataset, neg_dataset
+
+    return 1, 2
 
 def main():
 
-    SIZE = 100
+    SIZE = 200
 
-    # pos
-    pos_dataset = generate_2d_points(0,1,SIZE)
-    pos_dataframe = pd.DataFrame({'X1':pos_dataset[0],'X2':pos_dataset[1],'y':[+1]*SIZE})
-    # neg
-    neg_dataset = generate_2d_points(10,1,SIZE)
-    neg_dataframe = pd.DataFrame({'X1':neg_dataset[0],'X2':neg_dataset[1],'y':[-1]*SIZE})
+    pos_dataset, neg_dataset = make_points(SIZE)
 
-    dataframe = pos_dataframe.append(neg_dataframe)
-    dataframe = dataframe.reset_index()
-
-    X = dataframe[['X1','X2']]
-    y = dataframe['y']
-
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size = 0.3, random_state=7)
-
-    X_train = X_train.values
-    X_test = X_test.values
-    y_train = y_train.values
-    y_test = y_test.values
-
-    results = classif_algo(X_train, X_test, y_train, y_test)
-
-    print(results)
-
-    results['predicted_y'] = results['predicted_y'].astype('category')
-
-    p = (
-        ggplot(data = results, mapping = aes(x = 'X1', y = 'X2', fill = 'predicted_y')) 
-        + geom_point()
-    )
-    print(p)
-    # plt.scatter(x = pos_dataset_test[0],y = pos_dataset_test[1], marker = 'o', c = 'green')
-    # plt.scatter(x = neg_dataset_test[0],y = neg_dataset_test[1], marker = 'x', c = 'red')
+    # plt.scatter(x = pos_dataset[0],y = pos_dataset[1], marker = 'o', c = 'green')
+    # plt.scatter(x = neg_dataset[0],y = neg_dataset[1], marker = 'x', c = 'red')
     # plt.show()
+
+    
+    # dataframe = pos_dataframe.append(neg_dataframe)
+    # dataframe = dataframe.reset_index()
+
+    # X = dataframe[['X1','X2']]
+    # y = dataframe['y']
+
+    # X_train, X_test, y_train, y_test = train_test_split(X, y, test_size = 0.3, random_state=7)
+
+    # X_train = X_train.values
+    # X_test = X_test.values
+    # y_train = y_train.values
+    # y_test = y_test.values
+
+    # results = classif_algo(X_train, X_test, y_train, y_test)
+
+    # print(results)
+
+    # results['predicted_y'] = results['predicted_y'].astype('category')
+
+    # p = (
+    #     ggplot(data = results, mapping = aes(x = 'X1', y = 'X2', fill = 'predicted_y')) 
+    #     + geom_point()
+    # )
+    # print(p)
+    # # plt.scatter(x = pos_dataset_test[0],y = pos_dataset_test[1], marker = 'o', c = 'green')
+    # # plt.scatter(x = neg_dataset_test[0],y = neg_dataset_test[1], marker = 'x', c = 'red')
+    # # plt.show()
     
     return None
 
