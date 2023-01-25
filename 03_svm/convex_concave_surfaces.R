@@ -13,4 +13,4 @@ z_saddle = outer(x,y,saddle)
 z_convex = outer(x,y,convex)
 
 persp(x,y,z_saddle)
-persp(x,y,z_convex)
+#persp(x,y,z_convex)

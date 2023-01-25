@@ -1,5 +1,5 @@
-library(tcltk)
-x = seq(-10,+10,len=1000)
+x = seq(-20,+10,len=10000)
+plot(x,log(x))
 
-X11()
-plot(log(x)
+
+plot(x,-log(x))

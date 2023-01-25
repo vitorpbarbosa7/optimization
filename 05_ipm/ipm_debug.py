@@ -30,6 +30,8 @@ b = ar([8,6])
 # x4 = 3
 
 X = np.diag([1,1,5,3])
+print(X)
+exit()
 
 # >>>> Dual Form <<<<
 
@@ -57,7 +59,7 @@ mu = 1.4375
 e = np.ones(4)
 
 # Rate of change between interations
-eta = 0.1
+eta = 0.995
 
 # Vectors Delta_x, Delta_pi, Delta_z. 
 dX = np.zeros(4)
