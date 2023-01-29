@@ -1,3 +1,4 @@
+# reference: https://www.youtube.com/playlist?list=PLKWX1jIoUZaVpVhMfevAE7iYNcDHPEJI_
 import numpy as np
 import pandas as pd
 from math import log
