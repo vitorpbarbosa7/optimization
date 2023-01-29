@@ -50,7 +50,7 @@ Pi = ar([2,2])
 
 Z = np.diag([4,3,2,2])
 
-# > Barrier mu term ????
+# > Barrier mu term 
 mu = 1.4375
 
 # Column vector for helping with matrix operations
