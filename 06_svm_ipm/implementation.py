@@ -34,6 +34,8 @@ def primal_dual_path():
     # Matrix Q, which is yi*yj*<xi*xj>, a result of the Primal... kkt, and finally a simplification for this 
     # matrix form 
     Q = ( y_train @ y_train.T ) * (X_train @ X_train.T)
+    print(Q)
+    print(Q.shape)
 
     # Hyperparameters to start
     # thinking about the meaning of C (intuition and mathematics understanding according to objective function)
@@ -60,7 +62,9 @@ def primal_dual_path():
     #Diagnonal matrix S (slack variables, according to first equation)
     # f1 = Q*alpha + y*b + Ksi - S - e = 0
     # S is an array of values? slack value for each training example
-    S = np.diag(np.asarray((Q @ np.diag(Alpha)) + y_train*b + np.diag(Ksi) - e))
+    # S = np.diag(np.asarray((Q @ np.diag(Alpha)) + y_train*b + np.diag(Ksi) - e))
+    S = (Q @ Alpha) + y_train*b + Ksi - e
+    print(S)
     print(S.shape)
 
     # Current gap, from the Complementary Slackness of the Primal Dual Path Following
@@ -85,24 +89,31 @@ def primal_dual_path():
     b = npoints+1
     c = 2*npoints+1
     d = 3*npoints+1
-    J[0:npoints,0:npoints] = Q
-    J[0:npoints,0:npoints+1] = y_train
-    J[0:npoints,npoints+1:2*npoints+1] = -I
-    J[0:npoints,2*npoints+1:3*npoints+1] = I
+    J[0:a,0:a] = Q
+    J[0:a,a:b] = y_train
+    J[0:a,b:c] = -I
+    J[0:a,c:d] = I
 
     # > Second row
-    J[npoints:npoints+1,0:npoints] = -y_train.T
-    J[npoints:npoints+1,npoints:3*npoints+1] = 0
+    J[a:b,0:a] = -y_train.T
+    J[a:b,a:d] = 0
     # __viz(J,True)
 
     # while (gap > threshld):
 
     # > Third row
-    J[npoints+1:2*npoints+1,0:npoints] = S 
-    J[npoints+1:2*npoints+1,npoints+1] = 0
-    J[npoints+1:2*npoints+1,npoints+1:2*npoints+1] = 0
-    J[npoints+1:2*npoints+1,2*npoints+1:3*npoints+1] = 0
+    J[b:c,0:a] = S
+    J[b:c,a:b] = 0
+    J[b:c,b:c] = 0
+    J[b:c,c:d] = 0
+
+    # Fourth row
+    J[c:d,0:a] = -Ksi
+    J[c:d,a:b] = 0
+    J[c:d,b:c] = 0
+    J[c:d,c:d] = (C-Alpha)
     __viz(J,True)
+    
 
     
 
