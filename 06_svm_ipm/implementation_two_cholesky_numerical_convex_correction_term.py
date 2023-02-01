@@ -8,6 +8,7 @@ from numpy.linalg import solve
 import matplotlib.pyplot as plt
 import seaborn as sns
 from plotnine import *
+from plotnine3d import ggplot_3d, geom_polygon_3d, geom_point_3d
 
 from sklearn.metrics import accuracy_score
 
@@ -25,39 +26,40 @@ def classification(X_train, y_train, alphas, b, X_test, y_test, threshold:float 
     # print(sum(alpha_y*x_multi))
 
     all_labels = []
+    sum_labels = []
     y_hats = []
     for i in range(len(X_test)):
         # label = sum((alphas @ np.ravel(y_train)) * (X_test[i] @ X_train≠–=.T)) + b
         sum_label = sum((alphas * np.ravel(y_train)) * (X_test[i] @ X_train.T)) + b
+        sum_labels.append(sum_label)
 
         if sum_label >= 0:
             label = 1
         else:
             label = -1
         expected_label = list(y_test[i])
-        print(f'Sum_label: {sum_label}. Predicted label and real label: {label}::{expected_label}')
-        exit()
+        # print(f'Sum_label: {sum_label}.     Predicted label and real label: {label}::{expected_label}')
 
         all_labels.append([expected_label,label])
         y_hats.append(label)
 
-    return all_labels, y_hats
+    return all_labels, y_hats, sum_labels
 
 
 
-def simple_dataset(size):
+def simple_dataset(size, mean_pos:float = 10, mean_neg = 1):
 
     # Two-dimensional dataset
     # Negative examples with mean 0 and sd = 1
     # Positive examples with mean 10 and sd = 1
     
-    neg_train = _gen_sample(1,1,size,-1)
-    pos_train = _gen_sample(10,1,size,+1)
+    neg_train = _gen_sample(mean_neg,1,size,-1)
+    pos_train = _gen_sample(mean_pos,1,size,+1)
 
     train = np.concatenate((neg_train, pos_train), axis = 0)
 
-    neg_test = _gen_sample(1,1,size,-1)
-    pos_test = _gen_sample(10,1,size,+1)
+    neg_test = _gen_sample(mean_neg,1,size,-1)
+    pos_test = _gen_sample(mean_pos,1,size,+1)
 
     test = np.concatenate((neg_test, pos_test), axis = 0)
 
@@ -251,7 +253,7 @@ def primal_dual_path(X_train, y_train):
         ggplot(data = df_plot, mapping = aes(x = 'x1', y = 'x2', fill = 'factor(label)')) + 
         geom_point()
     )
-    print(p)
+    # print(p)
 
     return np.diag(Alpha), b, np.diag(S), np.diag(Ksi)
 
@@ -284,6 +286,23 @@ def dataset_viz(X, y):
 
     return plot
 
+
+def plot3d(X1, X2, sum_labels):
+
+    df_plot = pd.DataFrame({'x1':X1,'x2':X2,'z':sum_labels})
+
+    plot = (
+        ggplot_3d(df_plot) + 
+        aes(x = 'x1', y = 'x2', z = 'sum_labels') + 
+        geom_polygon_3d(size = 0.01) + 
+        geom_point_3d(size = 0.01) + 
+        theme_minimal()
+    )
+
+    print(plot)
+
+    return plot
+
 if __name__ == '__main__':
     SIZE = 20
     train, test = simple_dataset(SIZE)
@@ -306,15 +325,15 @@ if __name__ == '__main__':
 
     # classification Task
 
-    all_labels, y_hats = classification(X_train = X_train, 
+    all_labels, y_hats, sum_labels = classification(X_train = X_train, 
                                         y_train = y_train, 
                                         alphas = Alpha, 
                                         b = b[0], 
                                         X_test = X_test, 
                                         y_test = y_test)
 
-    print(all_labels)
+
+    plot3d(X_test[:,0], X_test[:,1], sum_labels)
 
     y_true = np.ravel(y_test)
-
     print(accuracy_score(y_true = y_true, y_pred = y_hats))
