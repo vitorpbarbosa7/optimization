@@ -10,30 +10,30 @@ from plotnine import *
 
 from sklearn.metrics import accuracy_score
 
-def classification(X_train, y_train, Alpha, b, X_test, y_test, threshold:float = 1E-5):
+def classification(X_train, y_train, alphas, b, X_test, y_test, threshold:float = 1E-5):
 
     all_labels = None
-    alphas = np.diag(Alpha)
 
-    # print(alphas < threshold)
+    alphas.setflags(write = True)
+    alphas[alphas < threshold] = 0
 
-    alpha_y = alphas * np.ravel(y_train)
-    x_multi = X_test[1] @ X_train.T
-    print(alpha_y.shape)
-    print(x_multi.shape)
-    print(sum(alpha_y*x_multi))
+    # alpha_y = alphas * np.ravel(y_train)
+    # x_multi = X_test[1] @ X_train.T
+    # print(alpha_y.shape)
+    # print(x_multi.shape)
+    # print(sum(alpha_y*x_multi))
 
     all_labels = []
     y_hats = []
     for i in range(len(X_test)):
         label = sum((alphas * np.ravel(y_train)) * (X_test[i] @ X_train.T)) + b
-        print(f'Calculated label: {label}')
+        # print(f'Calculated label: {label}')
 
         if label >= 0:
             label = 1
         else:
             label = -1
-        print(f'Classificated label: {label}')
+        # print(f'Classificated label: {label}')
         expected_label = list(y_test[i])
 
         all_labels.append([expected_label,label])
@@ -217,10 +217,10 @@ def primal_dual_path(X_train, y_train):
         S = np.diag(S)
         Ksi = np.diag(Ksi)
 
-    plt.plot(gaps)
-    plt.show()
+    # plt.plot(gaps)
+    # plt.show()
 
-    return Alpha, b, S, Ksi
+    return np.diag(Alpha), b, np.diag(S), np.diag(Ksi)
 
 
 
@@ -254,7 +254,7 @@ def dataset_viz(X, y):
     return plot
 
 if __name__ == '__main__':
-    SIZE = 4
+    SIZE = 40
     train, test = simple_dataset(SIZE)
 
     X_train = train[:,[0,1]]
@@ -277,7 +277,7 @@ if __name__ == '__main__':
 
     all_labels, y_hats = classification(X_train = X_train, 
                                         y_train = y_train, 
-                                        Alpha = Alpha, 
+                                        alphas = Alpha, 
                                         b = b[0], 
                                         X_test = X_test, 
                                         y_test = y_test)

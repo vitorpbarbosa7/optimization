@@ -38,7 +38,7 @@ def classif_algo(X_train, X_test, y_train, y_test):
                 m_positive += 1
 
             # classe negativa
-            if y_train[index_train] == -1:|
+            if y_train[index_train] == -1:
                 single_dot_product_negative = np.dot(unseen, seen)
                 sum_negative += single_dot_product_negative
                 m_negative += 1
