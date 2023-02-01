@@ -1,6 +1,7 @@
 # reference: https://www.youtube.com/playlist?list=PLKWX1jIoUZaVpVhMfevAE7iYNcDHPEJI_
 import numpy as np
 import pandas as pd
+import time
 from math import log
 from numpy import array as ar
 from numpy.linalg import solve
@@ -26,6 +27,7 @@ def classification(X_train, y_train, alphas, b, X_test, y_test, threshold:float 
     all_labels = []
     y_hats = []
     for i in range(len(X_test)):
+        # label = sum((alphas @ np.ravel(y_train)) * (X_test[i] @ X_train≠–=.T)) + b
         label = sum((alphas * np.ravel(y_train)) * (X_test[i] @ X_train.T)) + b
         # print(f'Calculated label: {label}')
 
@@ -75,8 +77,8 @@ def primal_dual_path(X_train, y_train):
     # thinking about the meaning of C (intuition and mathematics understanding according to objective function)
     # https://stats.stackexchange.com/questions/31066/what-is-the-influence-of-c-in-svms-with-linear-kernel
     # answer from deerishi
-    C = 0.8
-    eta = 0.07 # Adapt answers throughout iterations
+    C = 2
+    eta = 0.03 # Adapt answers throughout iterations
     b = np.random.uniform(low = -1, high = 1, size = 1) # is this only one number?????
     iteration = 1
     threshold = 1E-5
@@ -89,7 +91,7 @@ def primal_dual_path(X_train, y_train):
     # Identity matrix
     I = np.identity(npoints)
 
-    # alphas initialized as half of the upper bound C
+    # alphas initialized with some value between the lower bound 0 and the the upper bound C
     Alpha = np.diag([C/2]*npoints)
     print(f'Initial Alpha: \n {Alpha}')
     print(Alpha.shape)
@@ -106,16 +108,12 @@ def primal_dual_path(X_train, y_train):
 
     # Current gap, from the Complementary Slackness of the Primal Dual Path Following
     # Dot product used for this summation
-    gap_array = e.T @ S @ Alpha @ e
-    gap = gap_array[0][0]
+    gap = np.diag(S) @ np.diag(Alpha)
     # print(f'Initial gap: {gap}')
 
     # Initial mu, that is, the term from the barrier from the interior point method using
-    mu = gap
+    mu = gap / 2
     # print(f'Initial mu: {mu}')
-
-    # From the Interior Point Method Framework, we should get closer to the barriers
-    reducing_factor = 0.1
 
     # >> Jacobian 
     jacobian_format = 3*npoints + 1
@@ -142,6 +140,12 @@ def primal_dual_path(X_train, y_train):
     J[a_block:b_block,c_block:d_block] = 0 # verbose
     # __viz(J,True)
 
+    # >> Right hand side of the System of Equations
+    # Vector of B, of right side linear system (**Equations**) (Jacobian * derivatives = **Equations**):
+    B = np.zeros(jacobian_format)
+    # B = np.zeros(2*npoints+1)
+
+	# From this point, the jacobian matrix has terms which will modified using the interior point method with the barrier
     gaps = []
     while (gap > threshold):
     # for i in range(100): # test iterations before solve whole problem
@@ -159,11 +163,9 @@ def primal_dual_path(X_train, y_train):
         J[c_block:d_block,c_block:d_block] = (C-Alpha)
         # __viz(J,True)
 
-        # Vector of B, of right side linear system (**Equations**) (Jacobian * derivatives = **Equations**):
-        B = np.zeros(jacobian_format)
-
+        # >> Right hand side of the System of Equations
         # First function (f1)
-        f1 = (-Q)@np.diag(Alpha) - y_train*b - np.diag(Ksi) + np.diag(S) + e
+        f1 = np.diag((-Q)@np.diag(Alpha) - y_train*b - np.diag(Ksi) + np.diag(S) + e)
         # print(f'f1 : {f1}')
 
         # Second function (f2)
@@ -179,7 +181,7 @@ def primal_dual_path(X_train, y_train):
         # print(f'f4 : {f4}')
 
         # Filling B
-        B[0:a_block] = np.diag(f1)
+        B[0:a_block] = f1
         B[a_block:b_block] = f2 # scalar
         B[b_block:c_block] = f3
         B[c_block:d_block] = f4
@@ -203,13 +205,13 @@ def primal_dual_path(X_train, y_train):
         iteration += 1
 
         # Recalculating gap
-        gap_array = e.T @ np.diag(S) @ np.diag(Alpha) @ e
-        gap = gap_array[0][0]
+        gap= S @ Alpha
 
         # As iterations go, we must allow objective function to get closer to the barrier
-        mu = mu * reducing_factor
+        mu = mu * 0.92
 
-        print(f'Iteration {iteration} and Current gap is :{gap}')
+        print(f'Iteration {iteration} -- Current gap is :{gap} --  Mu is: {mu}')
+        # time.sleep(0.1)
         gaps.append(gap)
 
         # go back to original format to new iteration
@@ -220,9 +222,23 @@ def primal_dual_path(X_train, y_train):
     # plt.plot(gaps)
     # plt.show()
 
+    # Plotting the support vectors
+
+    
+    colors = np.ones(Q.shape[0])
+    alphas_boolean_mask = np.where(np.diag(Alpha) > threshold)
+    colors[alphas_boolean_mask] = 2
+
+    print(colors)
+
+    df_plot = pd.DataFrame({'x1':X_train.T[0],'x2':X_train.T[1],'label':colors})
+    p = (
+        ggplot(data = df_plot, mapping = aes(x = 'x1', y = 'x2', fill = 'factor(label)')) + 
+        geom_point()
+    )
+    print(p)
+
     return np.diag(Alpha), b, np.diag(S), np.diag(Ksi)
-
-
 
 def _gen_sample(mean, sd, size, target:int):
 
@@ -254,7 +270,7 @@ def dataset_viz(X, y):
     return plot
 
 if __name__ == '__main__':
-    SIZE = 40
+    SIZE = 20
     train, test = simple_dataset(SIZE)
 
     X_train = train[:,[0,1]]
@@ -268,10 +284,10 @@ if __name__ == '__main__':
 
     Alpha, b, S, Ksi = primal_dual_path(X_train, y_train)
 
-    print(f'\n\nAlpha: \n{Alpha}')
-    print(f'\n\nb: \n{b}')
-    print(f'\n\nS: \n{S}')
-    print(f'\n\nKsi: \n{Ksi}')
+    # print(f'\n\nAlpha: \n{Alpha}')
+    # print(f'\n\nb: \n{b}')
+    # print(f'\n\nS: \n{S}')
+    # print(f'\n\nKsi: \n{Ksi}')
 
     # classification Task
 
