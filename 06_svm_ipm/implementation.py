@@ -8,6 +8,41 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from plotnine import *
 
+from sklearn.metrics import accuracy_score
+
+def classification(X_train, y_train, Alpha, b, X_test, y_test, threshold:float = 1E-5):
+
+    all_labels = None
+    alphas = np.diag(Alpha)
+
+    # print(alphas < threshold)
+
+    alpha_y = alphas * np.ravel(y_train)
+    x_multi = X_test[1] @ X_train.T
+    print(alpha_y.shape)
+    print(x_multi.shape)
+    print(sum(alpha_y*x_multi))
+
+    all_labels = []
+    y_hats = []
+    for i in range(len(X_test)):
+        label = sum((alphas * np.ravel(y_train)) * (X_test[i] @ X_train.T)) + b
+        print(f'Calculated label: {label}')
+
+        if label >= 0:
+            label = 1
+        else:
+            label = -1
+        print(f'Classificated label: {label}')
+        expected_label = list(y_test[i])
+
+        all_labels.append([expected_label,label])
+        y_hats.append(label)
+
+    return all_labels, y_hats
+
+
+
 def simple_dataset(size):
 
     # Two-dimensional dataset
@@ -21,18 +56,12 @@ def simple_dataset(size):
 
     neg_test = _gen_sample(1,1,size,-1)
     pos_test = _gen_sample(10,1,size,+1)
-    test = np.append(neg_test, pos_test)
 
-    test = np.concatenate((neg_train, pos_train), axis = 0)
+    test = np.concatenate((neg_test, pos_test), axis = 0)
 
     return train,test
 
-def primal_dual_path():
-
-    X_train = train[:,[0,1]]
-    y_train = train[:,2].reshape(-1,1)
-    # print(X_train)
-    # print(y_train)
+def primal_dual_path(X_train, y_train):
 
     npoints = X_train.shape[0]
 
@@ -46,11 +75,11 @@ def primal_dual_path():
     # thinking about the meaning of C (intuition and mathematics understanding according to objective function)
     # https://stats.stackexchange.com/questions/31066/what-is-the-influence-of-c-in-svms-with-linear-kernel
     # answer from deerishi
-    C = 1 
-    eta = 0.1 # Adapt answers throughout iterations
+    C = 0.8
+    eta = 0.07 # Adapt answers throughout iterations
     b = np.random.uniform(low = -1, high = 1, size = 1) # is this only one number?????
     iteration = 1
-    threshold = 1E-1
+    threshold = 1E-5
 
     # vector with ones
     e = np.ones(npoints).reshape(-1,1)
@@ -86,7 +115,7 @@ def primal_dual_path():
     # print(f'Initial mu: {mu}')
 
     # From the Interior Point Method Framework, we should get closer to the barriers
-    reducing_factor = 0.9
+    reducing_factor = 0.1
 
     # >> Jacobian 
     jacobian_format = 3*npoints + 1
@@ -134,7 +163,7 @@ def primal_dual_path():
         B = np.zeros(jacobian_format)
 
         # First function (f1)
-        f1 = (-Q)@np.diag(Alpha) - y_train*b_block - np.diag(Ksi) + np.diag(S) + e
+        f1 = (-Q)@np.diag(Alpha) - y_train*b - np.diag(Ksi) + np.diag(S) + e
         # print(f'f1 : {f1}')
 
         # Second function (f2)
@@ -188,7 +217,11 @@ def primal_dual_path():
         S = np.diag(S)
         Ksi = np.diag(Ksi)
 
-    return gaps
+    plt.plot(gaps)
+    plt.show()
+
+    return Alpha, b, S, Ksi
+
 
 
 def _gen_sample(mean, sd, size, target:int):
@@ -209,9 +242,9 @@ def __viz(M, annot:bool = False):
     sns.heatmap(M, annot = annot)
     plt.show()
 
-def dataset_viz(dataset):
+def dataset_viz(X, y):
 
-    dataframe = pd.DataFrame({'X1':dataset[:,0],'X2':dataset[:,1],'y':dataset[:,2]})
+    dataframe = pd.DataFrame({'X1':X[:,0],'X2':X[:,1],'y':np.ravel(y)})
 
     plot = (
         ggplot(data = dataframe, mapping = aes(x = 'X1', y = 'X2')) + 
@@ -221,13 +254,36 @@ def dataset_viz(dataset):
     return plot
 
 if __name__ == '__main__':
-    SIZE = 2
+    SIZE = 4
     train, test = simple_dataset(SIZE)
-    # print(dataset_viz(train))
 
-    gaps = primal_dual_path()
-    plt.plot(gaps)
-    plt.show()
+    X_train = train[:,[0,1]]
+    y_train = train[:,2].reshape(-1,1)
 
+    X_test = test[:,[0,1]]
+    y_test = test[:,2].reshape(-1,1)
 
+    # print(dataset_viz(X_train, y_train))
+    # print(dataset_viz(X_test, y_test))
 
+    Alpha, b, S, Ksi = primal_dual_path(X_train, y_train)
+
+    print(f'\n\nAlpha: \n{Alpha}')
+    print(f'\n\nb: \n{b}')
+    print(f'\n\nS: \n{S}')
+    print(f'\n\nKsi: \n{Ksi}')
+
+    # classification Task
+
+    all_labels, y_hats = classification(X_train = X_train, 
+                                        y_train = y_train, 
+                                        Alpha = Alpha, 
+                                        b = b[0], 
+                                        X_test = X_test, 
+                                        y_test = y_test)
+
+    print(all_labels)
+
+    y_true = np.ravel(y_test)
+
+    print(accuracy_score(y_true = y_true, y_pred = y_hats))
