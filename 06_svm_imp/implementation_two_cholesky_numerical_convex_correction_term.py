@@ -94,7 +94,7 @@ def primal_dual_path(X_train, y_train):
     # thinking about the meaning of C (intuition and mathematics understanding according to objective function)
     # https://stats.stackexchange.com/questions/31066/what-is-the-influence-of-c-in-svms-with-linear-kernel
     # answer from deerishi
-    C = 0.5
+    C = 2
     eta = 0.03 # Adapt answers throughout iterations
     b = np.random.uniform(low = -1, high = 1, size = 1) # is this only one number?????
     iteration = 1
@@ -102,16 +102,16 @@ def primal_dual_path(X_train, y_train):
 
     # vector with ones
     e = np.ones(npoints).reshape(-1,1)
-    print(f'e.T: \n {e.T.shape}')
-    print(f'e: \n {e.shape}')
+    # print(f'e.T: \n {e.T.shape}')
+    # print(f'e: \n {e.shape}')
 
     # Identity matrix
     I = np.identity(npoints)
 
     # alphas initialized with some value between the lower bound 0 and the the upper bound C
     Alpha = np.diag([C/2]*npoints)
-    print(f'Initial Alpha: \n {Alpha}')
-    print(Alpha.shape)
+    # print(f'Initial Alpha: \n {Alpha}')
+    # print(Alpha.shape)
 
     # Diagonal matrix Ksi with alpha values as initials
     Ksi = Alpha
@@ -120,8 +120,8 @@ def primal_dual_path(X_train, y_train):
     # f1 = Q*alpha + y*b + Ksi - S - e = 0
     # S is an array of values? slack value for each training example
     S = np.diag(np.diag((Q @ np.diag(Alpha)) + y_train*b + np.diag(Ksi) - e))
-    print(f'Initial S: \n {S}')
-    print(S.shape)
+    # print(f'Initial S: \n {S}')
+    # print(S.shape)
 
     # Current gap, from the Complementary Slackness of the Primal Dual Path Following
     # Dot product used for this summation
@@ -239,9 +239,7 @@ def primal_dual_path(X_train, y_train):
     # plt.plot(gaps)
     # plt.show()
 
-    # Plotting the support vectors
-
-    
+    # Plotting the support vectors (examples)
     colors = np.ones(Q.shape[0])
     alphas_boolean_mask = np.where(np.diag(Alpha) > threshold)
     colors[alphas_boolean_mask] = 2
@@ -253,7 +251,7 @@ def primal_dual_path(X_train, y_train):
         ggplot(data = df_plot, mapping = aes(x = 'x1', y = 'x2', fill = 'factor(label)')) + 
         geom_point()
     )
-    # print(p)
+    print(p)
 
     return np.diag(Alpha), b, np.diag(S), np.diag(Ksi)
 
@@ -304,7 +302,7 @@ def plot3d(X1, X2, sum_labels):
     return plot
 
 if __name__ == '__main__':
-    SIZE = 20
+    SIZE = 8
     train, test = simple_dataset(SIZE)
 
     X_train = train[:,[0,1]]
@@ -333,7 +331,7 @@ if __name__ == '__main__':
                                         y_test = y_test)
 
 
-    plot3d(X_test[:,0], X_test[:,1], sum_labels)
+    # plot3d(X_test[:,0], X_test[:,1], sum_labels)
 
     y_true = np.ravel(y_test)
     print(accuracy_score(y_true = y_true, y_pred = y_hats))
