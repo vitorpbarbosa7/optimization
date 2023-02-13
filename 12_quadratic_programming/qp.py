@@ -49,6 +49,8 @@ def simple_dataset(size, mean_pos:float = 10, mean_neg = 1):
     return train,test
 
 
+# >> main
+
 SIZE = 4
 train, test = simple_dataset(SIZE)
 
@@ -78,7 +80,9 @@ G = np.identity(npoints)
 A = np.diag((y_train.T)[0])
 b_vector = np.zeros(npoints)
 
+# > solve optimization problem, return alphas
 alphas_result, sol = cvxopt_solve_qp(P = Q, q = -e, G = G, h = upper_limit_vector, A = A, b = b_vector)
+#TODO test with the lowrankqp package
 
 threshold = 1E-16
 boolean_mask = (alphas_result > threshold)

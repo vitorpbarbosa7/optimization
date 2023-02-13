@@ -19,7 +19,13 @@ simpleDataset <- function() {
 }
 
 svm.polynomial <- function(X, Y, C = Inf, polynomia.order = 2, threshold = 1e-8) {
-  Qmat = (Y %*% t(Y)) * (1 + X %*% t(X))^polynomial.order
+  
+  # fronteira de decisão segundo kernel de ordem 2
+  # Qmat = (Y %*% t(Y)) * (X %*% t(X))^polynomial.order
+  
+  # kernel polinomial não homogêneo
+  coef0 = 1
+  Qmat = ((Y %*% t(Y)) * (X %*% t(X)) + coef0)^(polynomial.order)
   
   dvec = rep(-1, nrow(X))
   
@@ -84,6 +90,24 @@ discrete.classification <- function(model, testSet) {
    
 }
 
+plotHyperplane = function(model, x.axis = c(-1,1), y.axis = c(-1,1), resolution=100, continuous=TRUE){
+  x = seq(x.axis[1], x.axis[2], len = resolution)
+  y = seq(y.axis[1], y.axis[2], len = resolution)
+  
+  plotSet = NULL
+  for (i in 1:length(y)){
+    for (j in 1:length(y)){
+      plotSet = rbind(plotSet, c(x[i], y[j]))
+    }
+  }
+  
+  return (plotSet)
+  
+}
+
+plotSet = plotHyperplane(model, x.axis = c(-1,11), y.axis = c(-1,11), resolution = 100, continuous = False)
+plot(plotSet)
+
 
 
 
@@ -104,3 +128,8 @@ plot(model$all.alphas)
 
 print(test[,1:2])
 discrete.classification(model = model, testSet = test[,1:2])
+
+
+
+
+
