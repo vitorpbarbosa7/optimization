@@ -3,6 +3,8 @@ import numpy as np
 import seaborn as sns
 import matplotlib.pyplot as plt
 from numpy import array as ar
+from sklearn.metrics.pairwise import euclidean_distances
+
 
 X = pd.read_csv('iris.csv').values
 X = X[:,0:2]
@@ -50,7 +52,31 @@ print(homogeneous_polynomial_kernel(xn, xm))
 # all points
 X_matrix_kernel = homogeneous_polynomial_kernel(X, X.T)
 # check matrix again
+# sns.heatmap(X_matrix_kernel)
+# plt.show()
+
+# rbf kernel
+def radial_basis_function(xn:np.array, xm:np.array, sigma:float):
+    '''''
+    In mathematics, a radial function is a real-valued function defined on a Euclidean 
+    space Rn whose value at each point depends only on the distance between that point and the origin.
+    '''
+    
+    l2_norms = euclidean_distances(X = xn, Y = xm, squared = True)
+    variance = sigma**2
+    
+    #gamma = 1/variance
+    #print(gamma)
+    
+    k_xn_xm = np.exp(l2_norms/(2*variance))
+    
+    return k_xn_xm
+
+#test
+# radial_basis_function(X[0], X[1], sigma = 1)
+
+# all points
+X_matrix_kernel = radial_basis_function(X, X, sigma = 2)
+# check matrix again
 sns.heatmap(X_matrix_kernel)
 plt.show()
-
-# check if the two beautiful matrixes are equal:
